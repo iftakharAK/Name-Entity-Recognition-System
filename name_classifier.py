@@ -1,28 +1,13 @@
 import re
-
-from tqdm import tqdm
-
 import fire
-
 import pickle
-
-
+from tqdm import tqdm
 import numpy as np
-
 import pandas as pd
-
 from sklearn.linear_model import Perceptron
-
 from sklearn.metrics import classification_report
-
 from sklearn.model_selection import train_test_split
-
-
-
 from sklearn.feature_extraction import DictVectorizer
-
-
-
     
 
 def save_model(model, out_folder: str):
@@ -161,77 +146,62 @@ def load_data(in_folder: str):
     
     print('\n ## Extracting Target Label id from person.ttl:\n')
     
-    with open(in_folder+'/person.ttl',encoding='utf-8') as file:
-
-        for i, line in enumerate(tqdm(file)):
-            
-          try: 
-              
-           if current_line < line_limit and extract_limited_data_points:
-                
-                person_ids.append(extract_person_object_id(line))
-                                
-                current_line += 1
-                
-               
-          except Exception as e: 
+    try:
+        
+        with open(in_folder+'/person.ttl',encoding='utf-8') as file:
+    
+            for i, line in enumerate(tqdm(file)):
+                                  
+                    person_ids.append(extract_person_object_id(line))
+                                    
+                    current_line += 1
                     
-             print('** Failed Extracting Labels..'+ str(e))
+                    if current_line > line_limit and extract_limited_data_points:
+                        
+                        break
+                    
+                   
+    except Exception as e: 
+                        
+        print('** Failed Extracting Labels..'+ str(e))
    
              
     current_line = 0
         
     print('\n ## Constructing Dataset from <name.ttl,person.ttl> : <x,y>:\n')
-             
-    with open(in_folder+'/name.ttl',encoding='utf-8') as file:
-
-        for i, line in enumerate(tqdm(file)):
-            
-          try: 
-              
-           if current_line < line_limit and extract_limited_data_points:
-                                                
-                subject_id , subject_type , feature_val = extract_name_entity_attributes(line)
-                
-                if subject_type == 'name' and subject_id in person_ids:
+     
+    try:    
+        
+        with open(in_folder+'/name.ttl',encoding='utf-8') as file:
+    
+            for i, line in enumerate(tqdm(file)):
+                                                                  
+                    subject_id , subject_type , feature_val = extract_name_entity_attributes(line)
                     
-                      data_list.append([feature_val,1])
-                      
-                else:
-                                        
-                    data_list.append([feature_val,0]) 
-                
-                current_line += 1
-                 
+                    if subject_type == 'name' and subject_id in person_ids:
+                        
+                          data_list.append([feature_val,1])
+                          
+                    else:
+                                            
+                        data_list.append([feature_val,0]) 
+                    
+                    current_line += 1
+                    
+                    if current_line > line_limit and extract_limited_data_points:
+                        
+                        break      
                
-          except:
+    except:
                     
-             print()
-      
-    print(data_list)
-    
+        print('** Failed Dataset Construction..'+ str(e))
+          
     dataset = pd.DataFrame(data_list, columns =['name_entity', 'label'])
-    
-    #dataset = pd.read_csv (in_folder+'/ner_dataset.csv')
-    
-    print(dataset)
-    
+        
     return dataset
     
  
-    """
-    
-    try: 
-    
-        df = pd.read_csv (in_folder+'/ner_dataset.csv')
-        
-        return df
-    
-    except Exception as e: 
-    
-        print('** Failed Loading Dataset..'+ str(e))
-        
-    """
+  
     
 
     
@@ -266,6 +236,8 @@ def train(in_folder: str, out_folder: str) -> None:
     """
     
     dataset = load_data(in_folder)
+    
+    print(dataset)
     
     classes = np.unique(dataset[list(dataset.columns)[1]].values).tolist()
     
