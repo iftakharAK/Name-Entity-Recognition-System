@@ -1,3 +1,7 @@
+import re
+
+from tqdm import tqdm
+
 import fire
 
 import pickle
@@ -72,15 +76,64 @@ def split_data(data):
         
         classes = np.unique(y)
         
-        classes = classes.tolist()
-        
         return train_test_split(X, y, test_size = 0.33, random_state=0)
     
     except Exception as e: 
     
         print('** Failed Splitting Dataset..'+ str(e))
     
+def extract_person_object_id(line: str):  
     
+    """
+    
+    Extract Valid Person Id from person.ttl entry
+    
+    """
+    
+    subject_id_string = line.split(' ')[0]
+    
+    middle_subject_id_string = re.search('<(.*)>', subject_id_string)
+    
+    middle_id_string = middle_subject_id_string.group(1)
+    
+    list_subject_id_string = middle_id_string.split('/')
+    
+    return list_subject_id_string[len(list_subject_id_string)-1]
+
+
+def extract_name_entity_attributes(line: str):
+    
+        """
+        
+        Extract name entity attributes from name.ttl entry
+    
+        """
+    
+        subject_id_string = line.split(' ')[0]
+        
+        subject_type_string = line.split(' ')[1]
+        
+        middle_subject_id_string = re.search('<(.*)>', subject_id_string)
+        
+        middle_id_string = middle_subject_id_string.group(1)
+        
+        list_subject_id_string = middle_id_string.split('/')
+        
+        subject_id = list_subject_id_string[len(list_subject_id_string)-1]
+        
+        middle_subject_type_string = re.search('<(.*)>', subject_type_string)
+        
+        middle_type_string = middle_subject_type_string.group(1)
+        
+        list_middle_type_string = middle_type_string.split('/')
+        
+        subject_type = list_middle_type_string[len(list_middle_type_string)-1]
+        
+        feature_val_obj = re.search('"(.*)"', line)
+        
+        feature_val = feature_val_obj.group(1)
+        
+        return subject_id , subject_type , feature_val
    
 
 
@@ -98,6 +151,76 @@ def load_data(in_folder: str):
     
     """
     
+    names , person_ids , data_list = [] , [] , []
+    
+    current_line , line_limit = 0, 10000
+                    
+    current_line = 0
+    
+    extract_limited_data_points = True
+    
+    print('\n ## Extracting Target Label id from person.ttl:\n')
+    
+    with open(in_folder+'/person.ttl',encoding='utf-8') as file:
+
+        for i, line in enumerate(tqdm(file)):
+            
+          try: 
+              
+           if current_line < line_limit and extract_limited_data_points:
+                
+                person_ids.append(extract_person_object_id(line))
+                                
+                current_line += 1
+                
+               
+          except Exception as e: 
+                    
+             print('** Failed Extracting Labels..'+ str(e))
+   
+             
+    current_line = 0
+        
+    print('\n ## Constructing Dataset from <name.ttl,person.ttl> : <x,y>:\n')
+             
+    with open(in_folder+'/name.ttl',encoding='utf-8') as file:
+
+        for i, line in enumerate(tqdm(file)):
+            
+          try: 
+              
+           if current_line < line_limit and extract_limited_data_points:
+                                                
+                subject_id , subject_type , feature_val = extract_name_entity_attributes(line)
+                
+                if subject_type == 'name' and subject_id in person_ids:
+                    
+                      data_list.append([feature_val,1])
+                      
+                else:
+                                        
+                    data_list.append([feature_val,0]) 
+                
+                current_line += 1
+                 
+               
+          except:
+                    
+             print()
+      
+    print(data_list)
+    
+    dataset = pd.DataFrame(data_list, columns =['name_entity', 'label'])
+    
+    #dataset = pd.read_csv (in_folder+'/ner_dataset.csv')
+    
+    print(dataset)
+    
+    return dataset
+    
+ 
+    """
+    
     try: 
     
         df = pd.read_csv (in_folder+'/ner_dataset.csv')
@@ -107,6 +230,8 @@ def load_data(in_folder: str):
     except Exception as e: 
     
         print('** Failed Loading Dataset..'+ str(e))
+        
+    """
     
 
     
