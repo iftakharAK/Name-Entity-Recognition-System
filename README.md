@@ -41,6 +41,8 @@
 	
 	- pip install pickle
 	
+	- pip install nltk
+	
 	
 # Training the model: #
 
