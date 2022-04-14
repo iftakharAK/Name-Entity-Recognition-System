@@ -14,6 +14,8 @@
 - termcolor==1.1.0
 - threadpoolctl==3.1.0
 - tqdm==4.64.0
+- nltk==3.6.7
+- pickle
 
 # Installation: #
   
@@ -53,9 +55,23 @@
 
 - since the size of the dataset is big we can limit the size of the constructed dataset setting  the "extract_limited_data_points" param to True and Flase otherwise.
  
-  -and set the size of the dataset using line_limit param which is default 10000.
+  -and set the size of the dataset using "max_number_of_extraction_data_samples" param which is default 10000.
   
-  - Both of the param can be found at "load_data(in_folder: str)" function.
+  - Both of the param can be found at the top of the "name_classifier.py" file.
   
 
-- Rest of the model atrributes can be changed and will be found at train folder.
+- Rest of the model hyper-params can be changed and can be tuned from within the "train(in_folder: str, out_folder: str)" function.
+
+# Novel Entity Classification: #
+
+- To lable new instances place the new entity string within the "novel_instance.txt" file seperated by new line(\n) inside the "novel-instance-folder" Directory.
+
+- After placing the entity's in the "novel_instance.txt" file run the "classify_new_instances(new_instance_directory,saved_model_directory)" function inside the "name_classifier.py" file where:
+
+  - "new_instance_directory" is the folder path where "novel_instance.txt" file is placed.
+  
+  - "saved_model_directory" is the folder where serialised the Name Entity Recognition saved model file is stored.
+  
+- The predicted output of the novel entity instances will be saved in the "labeled-novel-instances-file" folders "labeled_novel_set_file.csv" file which will in the following format:
+
+  - <Input Entity> , <Predicted Label>: {True\False}
