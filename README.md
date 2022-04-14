@@ -74,4 +74,4 @@
   
 - The predicted output of the novel entity instances will be saved in the "labeled-novel-instances-file" folders "labeled_novel_set_file.csv" file which will in the following format:
 
-  - <Input Entity> , <Predicted Label>: {True\False}
+  - Input Entity , Predicted Label: {True\False}
